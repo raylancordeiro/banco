@@ -33,6 +33,13 @@ app.post('/conta', (req, res) => {
         res.status(400).json({message: "Os campos conta e saldo obrigatóriods"})
     }
 
+    connection.query(
+        `INSERT INTO conta (conta_id, saldo) VALUES (${conta_id}, ${saldo})`,
+        function(err, rows, fields
+        ) {
+        if (err) throw err;
+        res.status(201).json(req.body)
+      });
 })
 
 app.post('/transacao', (req, res) => {
