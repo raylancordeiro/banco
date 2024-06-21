@@ -44,15 +44,57 @@ app.post('/conta', (req, res) => {
 
 app.post('/transacao', (req, res) => {
 
-    const { forma_pagamento, conta_id, valor } = req.body
+    let { forma_pagamento, conta_id, valor } = req.body
+
+    // validações
     if (!forma_pagamento || !conta_id || !valor) {
         res.status(400).json({message: "Os campos obrigatóriods não foram enviados"})
     }
+    if(!['D', 'C', 'P'].includes(forma_pagamento)) {
+        res.status(400).json({message: "Forma de pagamento inválida. (D, C, P)"})
+    }
+    if(valor < 0) {
+        res.status(400).json({message: "Forma de pagamento inválida. (D, C, P)"})
+    }
 
-    res.status(201).json({
-        conta_id: 1234,
-        saldo: 18970
-    })
+    //calcula imposto
+    switch (forma_pagamento) {
+        case 'D':
+            valor -= valor * 0.03;
+        break;
+        case 'C':
+            valor -= valor * 0.05;
+        break;
+        default:
+            valor = valor;
+    }
+
+    //Realiaza transacao
+    connection.query(
+        `UPDATE conta SET saldo = saldo - ${valor} WHERE conta_id = ${conta_id}`,
+        function(err, rows, fields
+        ) {
+        if (err) throw err;
+    });
+
+    connection.query(
+        `INSERT INTO transacao (conta_id, forma_pagamento, valor)
+        VALUES (${conta_id} , '${forma_pagamento}', ${valor})`,
+        function(err, rows, fields
+        ) {
+        if (err) throw err;
+    });
+
+    connection.query(
+        `SELECT saldo FROM conta WHERE conta_id = ${conta_id}`,
+        function(err, rows, fields
+        ) {
+        if (err) throw err;
+        res.status(201).json({
+            conta_id: conta_id,
+            saldo: rows[0].saldo
+        })
+    });
 })
 
 app.listen(port, () => {
