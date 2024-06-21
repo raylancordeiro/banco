@@ -7,20 +7,23 @@ app.use(express.json())
 
 var connection = mysql.createConnection({
   host     : process.env.DB_HOST,
+  database : process.env.DB_NAME,
   user     : process.env.DB_USER,
   password : process.env.DB_PASSWORD
 });
 
 app.get('/conta/:id', (req, res) => {
 
-    connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
+    connection.query(
+        `SELECT * FROM conta WHERE conta_id = ${req.params.id}`,
+        function(err, rows, fields
+        ) {
         if (err) throw err;
-        res.json({
-            conta_id: 1234,
-            saldo: 18970
-        })
+        if(rows.length == 0) {
+            res.status(404).json({})
+        }
+        res.json(rows[0])
       });
-    
 })
 
 app.post('/conta', (req, res) => {
@@ -30,10 +33,6 @@ app.post('/conta', (req, res) => {
         res.status(400).json({message: "Os campos conta e saldo obrigatóriods"})
     }
 
-    res.status(201).json({
-        conta_id: 1234,
-        saldo: 18970
-    })
 })
 
 app.post('/transacao', (req, res) => {
