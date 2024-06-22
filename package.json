@@ -4,6 +4,9 @@
     "description": "",
     "main": "app.js",
     "type": "module",
+    "engines": {
+      "node": "18"
+    },
     "scripts": {
       "test": "echo \"Error: no test specified\" && exit 1",
       "dev": "npm install && nodemon --legacy-watch --watch"
