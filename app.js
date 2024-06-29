@@ -1,6 +1,8 @@
 import "dotenv/config"
 import express from "express"
 import mysql from 'mysql'
+import nodemailer from 'nodemailer'
+
 const app = express()
 const port = 3000
 app.use(express.json())
@@ -12,6 +14,16 @@ var connection = mysql.createConnection({
   password : process.env.DB_PASSWORD,
   port     : process.env.DB_PORT
 });
+
+const transporter = nodemailer.createTransport({
+    host: "sandbox.smtp.mailtrap.io",
+    port: 587,
+    secure: false, 
+    auth: {
+      user: "c6d62093e77594",
+      pass: "39d5605dcb5a86",
+    },
+  });
 
 app.get('/conta/:id', (req, res) => {
 
@@ -43,7 +55,7 @@ app.post('/conta', (req, res) => {
       });
 })
 
-app.post('/transacao', (req, res) => {
+app.post('/transacao', async (req, res) => {
 
     let { forma_pagamento, conta_id, valor } = req.body
 
@@ -55,16 +67,19 @@ app.post('/transacao', (req, res) => {
         res.status(400).json({message: "Forma de pagamento inválida. (D, C, P)"})
     }
     if(valor < 0) {
-        res.status(400).json({message: "Forma de pagamento inválida. (D, C, P)"})
+        res.status(400).json({message: "Valor inválido."})
     }
 
     //calcula imposto
+    let formaPagamentoDescricao = 'Pix';
     switch (forma_pagamento) {
         case 'D':
             valor -= valor * 0.03;
+            formaPagamentoDescricao = 'Debito'
         break;
         case 'C':
             valor -= valor * 0.05;
+            formaPagamentoDescricao = 'Credito'
         break;
         default:
             valor = valor;
@@ -96,6 +111,22 @@ app.post('/transacao', (req, res) => {
             saldo: rows[0].saldo
         })
     });
+
+    const info = await transporter.sendMail({
+        from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>', // sender address
+        to: "bar@example.com", // list of receivers
+        subject: "Comprovante ✔", // Subject line
+        html: `
+        <h2>Comprovante de pagamento</h2>
+        <b>Foi realizada uma transação</b>
+        <ul>
+            <li>Conta: ${conta_id}</li>
+            <li>Valor: ${valor}</li>
+            <li>forma de pagamento: ${formaPagamentoDescricao}</li>
+        </ul>
+        <img src="https://cldup.com/D72zpdwI-i.gif" width="500" height="350"/>
+        `, // html body
+      });
 })
 
 app.listen(port, () => {
